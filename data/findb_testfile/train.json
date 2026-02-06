@@ -1,0 +1,149 @@
+[
+  {
+    "question_id": 1,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list the last 50 trades created in January 2026 with who created them and when.",
+    "SQL": "SELECT HDR.M_NB AS Trade_Number,\n \u00a0\u00a0 HDR.M_OPT_MOPCNT + 1 AS Trade_Version,\n \u00a0\u00a0 CASE\u00a0\n \u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 WHEN M_COMMENT_BS = 'B' THEN HDR.M_BTRADER\u00a0\n \u00a0\u00a0\u00a0\u00a0\u00a0\u00a0 ELSE HDR.M_STRADER\u00a0\n \u00a0\u00a0 END AS Trader,\n \u00a0\u00a0 HDR.M__DT_TS AS Creation_Timestamp\nFROM TRN_HDR_DBF HDR\nWHERE 1 = 1\n \u00a0\u00a0 AND M_TRN_DATE BETWEEN '01-JAN-26' AND '31-JAN-26'\nORDER BY HDR.M__DT_TS DESC\nFETCH FIRST 50 ROWS ONLY",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE between 2026-01-01 and 2026-01-31; show M_NB, M_OPT_MOPCNT + 1, M_BTRADER if it is a Buy trade or M_STRADER if it is a sell trade, M__DT_TS; order by M__DT_TS desc; limit 50."
+  },
+  {
+    "question_id": 2,
+    "db_id": "findb_file",
+    "question": "Trade audit report: for trade 123456, show the full amendment history (all versions) with the user and timestamp of each change.",
+    "SQL": "SELECT EXT.M_VERSION, \n    US.M_LABEL,\n    EXT.M__DT_EXTS,\n    EXT.M__DT_TS\nFROM TRN_EXT_DBF EXT\n    LEFT JOIN MX_USER_DBF US\n        ON EXT.M_ACTOR = US.M_REFERENCE\nWHERE EXT.M_TRADE_REF = 123456;",
+    "knowledge": "Use TRN_EXT_DBF and MX_USER_DBF. Filter M_NB=123456; return TRN_EXT_DBF.M_VERSION, MX_USER_DBF.M_LABEL, TRN_EXT_DBF.M__DT_EXTS ,  TRN_EXT_DBF.M__DT_TS.; order by TRN_EXT_DBF.M_VERSION asc."
+  },
+  {
+    "question_id": 3,
+    "db_id": "findb_file",
+    "question": "Trade audit report: find trades modified in the last 7 days, excluding those created in the same period.",
+    "SQL": "SELECT\n  M_NB,\n  CASE\n       WHEN M_COMMENT_BS = 'B' THEN M_BTRADER\n       ELSE M_STRADER\n   END,\n  M_OPT_MOPLST\nFROM TRN_HDR_DBF\nWHERE M_OPT_MOPLST >= (CURRENT_DATE - INTERVAL '7' DAY)\n  AND M__DT_TS <  (CURRENT_DATE - INTERVAL '7' DAY)",
+    "knowledge": "Use TRN_HDR_DBF.  filter M_OPT_MOPLST >= current_date-7 and M__DT_TS < current_date-7."
+  },
+  {
+    "question_id": 4,
+    "db_id": "findb_file",
+    "question": "Trade audit report: count how many trades each user created this month (January 2026).",
+    "SQL": "SELECT\n  CASE\n       WHEN M_COMMENT_BS = 'B' THEN M_BTRADER\n       ELSE M_STRADER\n   END,\n  count(M_NB) as NO_OF_TRADES\nFROM TRN_HDR_DBF\nWHERE M__DT_TS >= DATE '2026-01-01'\n  AND M__DT_TS <  DATE '2026-02-01'\nGROUP BY CASE\n       WHEN M_COMMENT_BS = 'B' THEN M_BTRADER\n       ELSE M_STRADER\n   END",
+    "knowledge": "Use TRN_HDR_DBF. Group by CASE\n       WHEN M_COMMENT_BS = 'B' THEN M_BTRADER\n       ELSE M_STRADER\n   END; filter M__DT_TS in Jan 2026; count  M_NB."
+  },
+  {
+    "question_id": 5,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list cancelled trades in Q4 2025 with cancellation user and timestamp.",
+    "SQL": "SELECT \n  HDR.M_NB,\n  EXT.M_VERSION,\n  HDR.M_TRN_STATUS,\n  US.M_LABEL,\n  US.M_DESC,\n  EXT.M__DT_EXTS\nFROM TRN_HDR_DBF HDR\n    JOIN TRN_EXT_DBF EXT\n        ON HDR.M_NB= EXT.M_TRADE_REF\n    JOIN MX_USER_DBF US\n        ON EXT.M_ACTOR = US.M_REFERENCE\nWHERE EXT.M_ACTION = 8\n  AND EXT.M__DT_EXTS >= DATE '2024-10-01'\n  AND EXT.M__DT_EXTS <  DATE '2025-01-01'",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Filter EXT.M_ACTION=8 (or status code), and EXT.M__DT_EXTS in Q4 2025. Return HDR.M_NB, EXT.M_VERSION, HDR.M_TRN_STATUS, US.M_LABEL, US.M_DESC, EXT.M__DT_EXTS."
+  },
+  {
+    "question_id": 6,
+    "db_id": "findb_file",
+    "question": "Trade audit report: for each trade, return the latest version only, with the last updater and last update time.",
+    "SQL": "SELECT\n  HDR.M_NB,\n  EXT.M_VERSION,\n    M_NB,\n  CASE \n       WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER \n       ELSE HDR.M_STRADER \n   END AS TRADER,\n  HDR.M__DT_TS,\n  US.M_LABEL,\n  US.M_DESC,\n  EXT.M__DT_EXTS\nFROM TRN_HDR_DBF HDR\n    JOIN TRN_EXT_DBF EXT\n        ON HDR.M_LEXTREF = EXT.M_REFERENCE\n    JOIN MX_USER_DBF US\n        ON EXT.M_ACTOR = US.M_REFERENCE",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF."
+  },
+  {
+    "question_id": 7,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades where the same user both created and last updated the trade.",
+    "SQL": "SELECT\n  HDR.M_NB,\n  EXT.M_VERSION,\n  CASE \n       WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER \n       ELSE HDR.M_STRADER \n   END AS TRADER,\n  HDR.M__DT_TS,\n  US.M_LABEL,\n  EXT.M__DT_EXTS\nFROM TRN_HDR_DBF HDR\n    JOIN TRN_EXT_DBF EXT\n        ON HDR.M_LEXTREF = EXT.M_REFERENCE\n    JOIN MX_USER_DBF US\n        ON EXT.M_ACTOR = US.M_REFERENCE\nWHERE US.M_LABEL = (CASE \n       WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER \n       ELSE HDR.M_STRADER \n   END)",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Get latest version per trade, then compare US.M_LABEL and (CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END)."
+  },
+  {
+    "question_id": 8,
+    "db_id": "findb_file",
+    "question": "Trade audit report: show trades that have more than 3 amendments (more than 3 versions).",
+    "SQL": "SELECT\n    M_NB,\n    M_OPT_MOPCNT AS amendment_count\nFROM TRN_HDR_DBF\nWHERE M_OPT_MOPNB > 3",
+    "knowledge": "Use TRN_HDR_DBF. use M_OPT_MOPCNT; WHERE M_OPT_MOPCNT > 3."
+  },
+  {
+    "question_id": 9,
+    "db_id": "findb_file",
+    "question": "Trade audit report: find trades created outside business hours (before 08:00 or after 18:00).",
+    "SQL": "SELECT\n  M_NB,\n  M_OPT_MOPCNT + 1,\n  CASE \n       WHEN M_COMMENT_BS = 'B' THEN M_BTRADER \n       ELSE M_STRADER \n   END AS TRADER,\n  M__DT_TS,\n  EXTRACT(HOUR FROM M__DT_TS)\nFROM TRN_HDR_DBF\nWHERE EXTRACT(HOUR FROM M__DT_TS) < 8\n   OR EXTRACT(HOUR FROM M__DT_TS) >= 18",
+    "knowledge": "Use TRN_HDR_DBF. Extract hour from M__DT_TS; filter hour<8 or hour>=18."
+  },
+  {
+    "question_id": 10,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades created today, grouped by trader, with earliest and latest creation time.",
+    "SQL": "SELECT CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS TRADER, COUNT(*) AS TRADES_CREATED_TODAY, MIN(HDR.M__DT_TS) AS FIRST_CREATION_TS, MAX(HDR.M__DT_TS) AS LAST_CREATION_TS FROM TRN_HDR_DBF HDR WHERE HDR.M__DT_TS >= TRUNC(SYSDATE) AND HDR.M__DT_TS <  TRUNC(SYSDATE) + 1 GROUP BY CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END ORDER BY TRADES_CREATED_TODAY DESC;",
+    "knowledge": "Use TRN_HDR_DBF. \u201cCreated today\u201d = M__DT_TS >= TRUNC(SYSDATE) and < TRUNC(SYSDATE)+1. Group by trader (Buy = M_BTRADER, Sell = M_STRADER)."
+  },
+  {
+    "question_id": 11,
+    "db_id": "findb_file",
+    "question": "Trade audit report: show trades created in Jan 2026 by day",
+    "SQL": "SELECT TRUNC(HDR.M_TRN_DATE) AS TRADE_DAY, COUNT(*) AS TRADES_CREATED FROM TRN_HDR_DBF HDR WHERE HDR.M_TRN_DATE >= DATE '2026-01-01' AND HDR.M_TRN_DATE <  DATE '2026-02-01' GROUP BY TRUNC(HDR.M_TRN_DATE) ORDER BY TRADE_DAY;",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE in Jan 2026. Group by TRUNC(M_TRN_DATE)."
+  },
+  {
+    "question_id": 12,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list the top 10 users who amended trades in Jan 2026.",
+    "SQL": "sql SELECT US.M_LABEL, COUNT(*) AS AMENDMENT_COUNT FROM TRN_EXT_DBF EXT JOIN MX_USER_DBF US ON EXT.M_ACTOR=US.M_REFERENCE WHERE EXT.M__DT_EXTS>=DATE '2026-01-01' AND EXT.M__DT_EXTS<DATE '2026-02-01' AND EXT.M_ACTION<>1 GROUP BY US.M_LABEL ORDER BY AMENDMENT_COUNT DESC FETCH FIRST 10 ROWS ONLY;",
+    "knowledge": "Use TRN_EXT_DBF and MX_USER_DBF. Amendments = records in Jan-2026 with M_ACTION<>1."
+  },
+  {
+    "question_id": 13,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades where the creator is different from the last updater.",
+    "SQL": "sql SELECT HDR.M_NB, CASE WHEN HDR.M_COMMENT_BS='B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS CREATOR_TRADER, US.M_LABEL AS LAST_UPDATER, HDR.M__DT_TS AS CREATION_TS, EXT.M__DT_EXTS AS LAST_UPDATE_TS FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF=EXT.M_REFERENCE JOIN MX_USER_DBF US ON EXT.M_ACTOR=US.M_REFERENCE WHERE US.M_LABEL <> CASE WHEN HDR.M_COMMENT_BS='B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END;",
+    "knowledge": "Creator from TRN_HDR_DBF. Last updater from HDR.M_LEXTREF \u2192 TRN_EXT_DBF \u2192 MX_USER_DBF. Compare trader vs user label."
+  },
+  {
+    "question_id": 14,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades created in Jan 2026 that were cancelled later.",
+    "SQL": "sql SELECT HDR.M_NB, HDR.M__DT_TS AS CREATION_TS, EXT.M_VERSION AS CANCEL_VERSION, EXT.M__DT_EXTS AS CANCEL_TS, US.M_LABEL AS CANCELLED_BY FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON EXT.M_TRADE_REF=HDR.M_NB JOIN MX_USER_DBF US ON EXT.M_ACTOR=US.M_REFERENCE WHERE HDR.M_TRN_DATE>=DATE '2026-01-01' AND HDR.M_TRN_DATE<DATE '2026-02-01' AND EXT.M_ACTION=8 AND EXT.M__DT_EXTS>HDR.M__DT_TS ORDER BY EXT.M__DT_EXTS DESC;",
+    "knowledge": "Creation from TRN_HDR_DBF. Cancellation from TRN_EXT_DBF where M_ACTION=8 and cancel time > creation time."
+  },
+  {
+    "question_id": 15,
+    "db_id": "findb_file",
+    "question": "Trade audit report: find trades that had more than 5 amendments in Jan 2026.",
+    "SQL": "sql SELECT EXT.M_TRADE_REF AS TRADE_NUMBER, COUNT(*) AS AMENDMENTS_IN_JAN FROM TRN_EXT_DBF EXT WHERE EXT.M__DT_EXTS>=DATE '2026-01-01' AND EXT.M__DT_EXTS<DATE '2026-02-01' AND EXT.M_ACTION<>1 GROUP BY EXT.M_TRADE_REF HAVING COUNT(*)>5 ORDER BY AMENDMENTS_IN_JAN DESC;",
+    "knowledge": "Use TRN_EXT_DBF. Filter Jan-2026, exclude M_ACTION=1. Group by trade."
+  },
+  {
+    "question_id": 16,
+    "db_id": "findb_file",
+    "question": "Trade audit report: for a trade, show the time gap between each version.",
+    "SQL": "sql SELECT EXT.M_TRADE_REF, EXT.M_VERSION, EXT.M__DT_EXTS, EXT.M__DT_EXTS - LAG(EXT.M__DT_EXTS) OVER (PARTITION BY EXT.M_TRADE_REF ORDER BY EXT.M_VERSION) AS DELTA_DAYS FROM TRN_EXT_DBF EXT WHERE EXT.M_TRADE_REF=123456 ORDER BY EXT.M_VERSION;",
+    "knowledge": "Use TRN_EXT_DBF. Compute delta using LAG over versions."
+  },
+  {
+    "question_id": 17,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades last updated in the last 24 hours, with updater.",
+    "SQL": "sql SELECT HDR.M_NB, EXT.M_VERSION, EXT.M__DT_EXTS AS LAST_UPDATE_TS, US.M_LABEL AS LAST_UPDATED_BY FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF=EXT.M_REFERENCE JOIN MX_USER_DBF US ON EXT.M_ACTOR=US.M_REFERENCE WHERE EXT.M__DT_EXTS>=(SYSDATE-1) ORDER BY EXT.M__DT_EXTS DESC;",
+    "knowledge": "Use HDR.M_LEXTREF to get last ext record and filter EXT.M__DT_EXTS >= SYSDATE-1."
+  },
+  {
+    "question_id": 18,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades where header last-modified date differs from extension last-modified date.",
+    "SQL": "sql SELECT HDR.M_NB, HDR.M_OPT_MOPLST AS HDR_LAST_MOD_DATE, EXT.M__DT_EXTS AS EXT_LAST_MOD_TS, US.M_LABEL AS LAST_ACTOR FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF=EXT.M_REFERENCE JOIN MX_USER_DBF US ON EXT.M_ACTOR=US.M_REFERENCE WHERE TRUNC(HDR.M_OPT_MOPLST)<>TRUNC(EXT.M__DT_EXTS) ORDER BY EXT.M__DT_EXTS DESC;",
+    "knowledge": "Compare HDR.M_OPT_MOPLST with EXT.M__DT_EXTS for the latest extension."
+  },
+  {
+    "question_id": 19,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades created in Jan 2026 with their first amendment user and time.",
+    "SQL": "sql SELECT HDR.M_NB, HDR.M__DT_TS AS CREATION_TS, EXT.M__DT_EXTS AS FIRST_AMEND_TS, US.M_LABEL AS FIRST_AMENDER FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON EXT.M_TRADE_REF=HDR.M_NB JOIN MX_USER_DBF US ON EXT.M_ACTOR=US.M_REFERENCE WHERE HDR.M_TRN_DATE>=DATE '2026-01-01' AND HDR.M_TRN_DATE<DATE '2026-02-01' AND EXT.M_VERSION=2 ORDER BY EXT.M__DT_EXTS DESC;",
+    "knowledge": "Use TRN_HDR_DBF and TRN_EXT_DBF where M_VERSION=2."
+  },
+  {
+    "question_id": 20,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades where the same user amended the trade at least three times.",
+    "SQL": "sql SELECT EXT.M_TRADE_REF AS TRADE_NUMBER, US.M_LABEL, COUNT(*) AS AMENDMENTS_BY_USER FROM TRN_EXT_DBF EXT JOIN MX_USER_DBF US ON EXT.M_ACTOR=US.M_REFERENCE WHERE EXT.M_ACTION<>1 GROUP BY EXT.M_TRADE_REF, US.M_LABEL HAVING COUNT(*)>=3 ORDER BY AMENDMENTS_BY_USER DESC;",
+    "knowledge": "Use TRN_EXT_DBF and MX_USER_DBF. Group by trade and actor."
+  },
+  {
+    "question_id": 21,
+    "db_id": "findb_file",
+    "question": "Trade audit report: list trades that were cancelled and then reactivated.",
+    "SQL": "sql SELECT c.M_TRADE_REF AS TRADE_NUMBER, c.M_VERSION AS CANCEL_VERSION, c.M__DT_EXTS AS CANCEL_TS, r.M_VERSION AS REACT_VERSION, r.M__DT_EXTS AS REACT_TS FROM TRN_EXT_DBF c JOIN TRN_EXT_DBF r ON r.M_TRADE_REF=c.M_TRADE_REF AND r.M_VERSION>c.M_VERSION WHERE c.M_ACTION=8 AND r.M_ACTION<>8 ORDER BY r.M__DT_EXTS DESC;",
+    "knowledge": "Find a row with M_ACTION=8 followed by a later version with M_ACTION<>8."
+  }
+]

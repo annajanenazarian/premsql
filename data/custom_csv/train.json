@@ -1,0 +1,16 @@
+[
+  {
+    "question_id": 0,
+    "db_id": "RDBCNSCI",
+    "question": "<replace with a question about this database>",
+    "SQL": "<replace with the correct SQL query>",
+    "difficulty": "simple"
+  },
+  {
+    "question_id": 0,
+    "db_id": "RDBCNSTR",
+    "question": "<replace with a question about this database>",
+    "SQL": "<replace with the correct SQL query>",
+    "difficulty": "simple"
+  }
+]

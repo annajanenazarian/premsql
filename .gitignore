@@ -1,4 +1,3 @@
-data
 experiments
 output
 test.py
@@ -40,6 +39,8 @@ env2/
 
 # Data science and ML specific
 data/
+!data/
+!data/**/*.json
 models/
 *.h5
 *.pkl

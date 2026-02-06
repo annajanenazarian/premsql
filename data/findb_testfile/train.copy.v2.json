@@ -1,0 +1,268 @@
+[
+  {
+    "question_id": 1,
+    "db_id": "findb_file",
+    "question": "List the last 50 trades created in January 2026 with who created them and when",
+    "SQL": "SELECT HDR.M_NB AS Trade_Number, HDR.M_OPT_MOPCNT + 1 AS Trade_Version, CASE WHEN M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS Trader, HDR.M__DT_TS AS Creation_Timestamp FROM TRN_HDR_DBF HDR WHERE 1 = 1 AND M_TRN_DATE BETWEEN '01-JAN-26' AND '31-JAN-26' ORDER BY HDR.M_DT_TS DESC FETCH FIRST 50 ROWS ONLY",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE between 2026-01-01 and 2026-01-31; show M_NB, M_OPT_MOPCNT + 1, M_BTRADER if it is a Buy trade or M_STRADER if it is a sell trade, M_DT_TS; order by M_DT_TS desc; limit 50."
+  },
+  {
+    "question_id": 2,
+    "db_id": "findb_file",
+    "question": "For trade 123456, show the full amendment history (all versions) with the user and timestamp of each change",
+    "SQL": "SELECT EXT.M_VERSION, US.M_LABEL, EXT.M__DT_EXTS, EXT.M__DT_TS FROM TRN_EXT_DBF EXT LEFT JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE EXT.M_TRADE_REF = 123456;",
+    "knowledge": "Use TRN_EXT_DBF and MX_USER_DBF. Filter M_NB=123456; return TRN_EXT_DBF.M_VERSION, MX_USER_DBF.M_LABEL, TRN_EXT_DBF.M__DT_EXTS ,  TRN_EXT_DBF.M__DT_TS.; order by TRN_EXT_DBF.M_VERSION asc."
+  },
+  {
+    "question_id": 3,
+    "db_id": "findb_file",
+    "question": "Find trades modified in the last 7 days, excluding those created in the same period",
+    "SQL": "SELECT M_NB, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END, M_OPT_MOPLST FROM TRN_HDR_DBF WHERE M_OPT_MOPLST >= (CURRENT_DATE - INTERVAL '7' DAY) AND M__DT_TS <  (CURRENT_DATE - INTERVAL '7' DAY)",
+    "knowledge": "Use TRN_HDR_DBF.  filter M_OPT_MOPLST >= current_date-7 and M__DT_TS < current_date-7."
+  },
+  {
+    "question_id": 4,
+    "db_id": "findb_file",
+    "question": "Count how many trades each user created this month (January 2026)",
+    "SQL": "SELECT CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END, count(M_NB) as NO_OF_TRADES FROM TRN_HDR_DBF WHERE M__DT_TS >= DATE '2026-01-01' AND M__DT_TS <  DATE '2026-02-01' GROUP BY CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END",
+    "knowledge": "Use TRN_HDR_DBF. Group by CASEWHEN M_COMMENT_BS = 'B' THEN M_BTRADERELSE M_STRADER   END; filter M__DT_TS in Jan 2026; count  M_NB."
+  },
+  {
+    "question_id": 5,
+    "db_id": "findb_file",
+    "question": "List cancelled trades in Q4 2025 with cancellation user and timestamp",
+    "SQL": "SELECT   HDR.M_NB,  EXT.M_VERSION,  HDR.M_TRN_STATUS,  US.M_LABEL,  US.M_DESC,  EXT.M__DT_EXTSFROM TRN_HDR_DBF HDR    JOIN TRN_EXT_DBF EXT ON HDR.M_NB= EXT.M_TRADE_REF    JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCEWHERE EXT.M_ACTION = 8  AND EXT.M__DT_EXTS >= DATE '2024-10-01'  AND EXT.M__DT_EXTS <  DATE '2025-01-01'",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Filter EXT.M_ACTION=8 (or status code), and EXT.M__DT_EXTS in Q4 2025. Return HDR.M_NB, EXT.M_VERSION, HDR.M_TRN_STATUS, US.M_LABEL, US.M_DESC, EXT.M__DT_EXTS."
+  },
+  {
+    "question_id": 6,
+    "db_id": "findb_file",
+    "question": "For each trade, return the latest version only, with the last updater and last update time",
+    "SQL": "SELECT  HDR.M_NB,  EXT.M_VERSION,    M_NB, CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER    END AS TRADER,  HDR.M__DT_TS,  US.M_LABEL,  US.M_DESC,  EXT.M__DT_EXTSFROM TRN_HDR_DBF HDR    JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF = EXT.M_REFERENCE    JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF."
+  },
+  {
+    "question_id": 7,
+    "db_id": "findb_file",
+    "question": "List trades where the same user both created and last updated the trade",
+    "SQL": "SELECT HDR.M_NB, EXT.M_VERSION, CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS TRADER, HDR.M__DT_TS, US.M_LABEL, EXT.M__DT_EXTS FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF = EXT.M_REFERENCE JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE US.M_LABEL = (CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END)",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Get latest version per trade, then compare US.M_LABEL and (CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END)."
+  },
+  {
+    "question_id": 8,
+    "db_id": "findb_file",
+    "question": "Show trades that have more than 3 amendments (more than 3 versions)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT AS amendment_count FROM TRN_HDR_DBF WHERE M_OPT_MOPNB > 3",
+    "knowledge": "Use TRN_HDR_DBF. use M_OPT_MOPCNT; WHERE M_OPT_MOPCNT > 3."
+  },
+  {
+    "question_id": 9,
+    "db_id": "findb_file",
+    "question": "Find trades created outside business hours (before 08:00 or after 18:00)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT + 1, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, M__DT_TS, EXTRACT(HOUR FROM M__DT_TS) FROM TRN_HDR_DBF WHERE EXTRACT(HOUR FROM M__DT_TS) < 8 OR EXTRACT(HOUR FROM M__DT_TS) >= 18",
+    "knowledge": "Use TRN_HDR_DBF. Extract hour from M__DT_TS; filter hour<8 or hour>=18."
+  },
+  {
+    "question_id": 10,
+    "db_id": "findb_file",
+    "question": "List the latest 25 trades created in February 2026 with who created them and when",
+    "SQL": "SELECT HDR.M_NB AS Trade_Number, HDR.M_OPT_MOPCNT + 1 AS Trade_Version, CASE WHEN M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS Trader, HDR.M__DT_TS AS Creation_Timestamp FROM TRN_HDR_DBF HDR WHERE M_TRN_DATE BETWEEN '01-FEB-26' AND '28-FEB-26' ORDER BY HDR.M__DT_TS DESC FETCH FIRST 25 ROWS ONLY",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE between 2026-02-01 and 2026-02-28; show M_NB, M_OPT_MOPCNT + 1, M_BTRADER if it is a Buy trade or M_STRADER if it is a sell trade, M__DT_TS; order by M__DT_TS desc; limit 25."
+  },
+  {
+    "question_id": 11,
+    "db_id": "findb_file",
+    "question": "For trade 987654, show the full amendment history (all versions) with the user and timestamp of each change",
+    "SQL": "SELECT EXT.M_VERSION, US.M_LABEL, EXT.M__DT_EXTS, EXT.M__DT_TS FROM TRN_EXT_DBF EXT LEFT JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE EXT.M_TRADE_REF = 987654 ORDER BY EXT.M_VERSION ASC",
+    "knowledge": "Use TRN_EXT_DBF and MX_USER_DBF. Filter M_TRADE_REF=987654; return TRN_EXT_DBF.M_VERSION, MX_USER_DBF.M_LABEL, TRN_EXT_DBF.M__DT_EXTS , TRN_EXT_DBF.M__DT_TS; order by TRN_EXT_DBF.M_VERSION asc."
+  },
+  {
+    "question_id": 12,
+    "db_id": "findb_file",
+    "question": "Find trades modified in the last 14 days, excluding those created in the same period",
+    "SQL": "SELECT M_NB, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, M_OPT_MOPLST FROM TRN_HDR_DBF WHERE M_OPT_MOPLST >= (CURRENT_DATE - INTERVAL '14' DAY) AND M__DT_TS < (CURRENT_DATE - INTERVAL '14' DAY)",
+    "knowledge": "Use TRN_HDR_DBF. Filter M_OPT_MOPLST >= current_date-14 and M__DT_TS < current_date-14."
+  },
+  {
+    "question_id": 13,
+    "db_id": "findb_file",
+    "question": "Count how many trades each user created this month (February 2026)",
+    "SQL": "SELECT CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, COUNT(M_NB) AS NO_OF_TRADES FROM TRN_HDR_DBF WHERE M__DT_TS >= DATE '2026-02-01' AND M__DT_TS < DATE '2026-03-01' GROUP BY CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END",
+    "knowledge": "Use TRN_HDR_DBF. Group by CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END; filter M__DT_TS in Feb 2026; count M_NB."
+  },
+  {
+    "question_id": 14,
+    "db_id": "findb_file",
+    "question": "List cancelled trades in Q1 2026 with cancellation user and timestamp",
+    "SQL": "SELECT HDR.M_NB, EXT.M_VERSION, HDR.M_TRN_STATUS, US.M_LABEL, US.M_DESC, EXT.M__DT_EXTS FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_NB = EXT.M_TRADE_REF JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE EXT.M_ACTION = 8 AND EXT.M__DT_EXTS >= DATE '2026-01-01' AND EXT.M__DT_EXTS < DATE '2026-04-01'",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Filter EXT.M_ACTION=8 and EXT.M__DT_EXTS in Q1 2026. Return HDR.M_NB, EXT.M_VERSION, HDR.M_TRN_STATUS, US.M_LABEL, US.M_DESC, EXT.M__DT_EXTS."
+  },
+  {
+    "question_id": 15,
+    "db_id": "findb_file",
+    "question": "For each trade, return the latest version only, with the last updater and last update time, including trade status",
+    "SQL": "SELECT HDR.M_NB, EXT.M_VERSION, CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS TRADER, HDR.M_TRN_STATUS, EXT.M__DT_EXTS AS LAST_UPDATE_TIME, US.M_LABEL, US.M_DESC FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF = EXT.M_REFERENCE JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Join on HDR.M_LEXTREF = EXT.M_REFERENCE to get latest extension; return trade number, version, trader, status, last update time, and user."
+  },
+  {
+    "question_id": 16,
+    "db_id": "findb_file",
+    "question": "List trades where the same user both created and last updated the trade in 2026",
+    "SQL": "SELECT HDR.M_NB, EXT.M_VERSION, CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS TRADER, HDR.M__DT_TS, US.M_LABEL, EXT.M__DT_EXTS FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF = EXT.M_REFERENCE JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE US.M_LABEL = (CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END) AND EXT.M__DT_EXTS >= DATE '2026-01-01'",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Get latest version per trade, then compare US.M_LABEL and (CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END). Filter last update in 2026."
+  },
+  {
+    "question_id": 17,
+    "db_id": "findb_file",
+    "question": "Show trades that have more than 5 amendments (more than 5 versions)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT AS amendment_count FROM TRN_HDR_DBF WHERE M_OPT_MOPCNT > 5",
+    "knowledge": "Use TRN_HDR_DBF. Use M_OPT_MOPCNT; filter M_OPT_MOPCNT > 5."
+  },
+  {
+    "question_id": 18,
+    "db_id": "findb_file",
+    "question": "Find trades created outside business hours (before 07:00 or after 19:00)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT + 1, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, M__DT_TS, EXTRACT(HOUR FROM M__DT_TS) AS HOUR_OF_DAY FROM TRN_HDR_DBF WHERE EXTRACT(HOUR FROM M__DT_TS) < 7 OR EXTRACT(HOUR FROM M__DT_TS) >= 19",
+    "knowledge": "Use TRN_HDR_DBF. Extract hour from M__DT_TS; filter hour<7 or hour>=19."
+  },
+  {
+    "question_id": 19,
+    "db_id": "findb_file",
+    "question": "List the last 10 trades created in January 2026 with who created them and when",
+    "SQL": "SELECT HDR.M_NB AS Trade_Number, HDR.M_OPT_MOPCNT + 1 AS Trade_Version, CASE WHEN M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS Trader, HDR.M__DT_TS AS Creation_Timestamp FROM TRN_HDR_DBF HDR WHERE M_TRN_DATE BETWEEN '01-JAN-26' AND '31-JAN-26' ORDER BY HDR.M__DT_TS DESC FETCH FIRST 10 ROWS ONLY",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE between 2026-01-01 and 2026-01-31; show M_NB, M_OPT_MOPCNT + 1, M_BTRADER if it is a Buy trade or M_STRADER if it is a sell trade, M__DT_TS; order by M__DT_TS desc; limit 10."
+  },
+  {
+    "question_id": 20,
+    "db_id": "findb_file",
+    "question": "List the last 20 trades created in January 2026 with who created them and when",
+    "SQL": "SELECT HDR.M_NB AS Trade_Number, HDR.M_OPT_MOPCNT + 1 AS Trade_Version, CASE WHEN M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS Trader, HDR.M__DT_TS AS Creation_Timestamp FROM TRN_HDR_DBF HDR WHERE M_TRN_DATE BETWEEN '01-JAN-26' AND '31-JAN-26' ORDER BY HDR.M__DT_TS DESC FETCH FIRST 20 ROWS ONLY",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE between 2026-01-01 and 2026-01-31; show M_NB, M_OPT_MOPCNT + 1, M_BTRADER if it is a Buy trade or M_STRADER if it is a sell trade, M__DT_TS; order by M__DT_TS desc; limit 20."
+  },
+  {
+    "question_id": 21,
+    "db_id": "findb_file",
+    "question": "List the last 100 trades created in January 2026 with who created them and when",
+    "SQL": "SELECT HDR.M_NB AS Trade_Number, HDR.M_OPT_MOPCNT + 1 AS Trade_Version, CASE WHEN M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS Trader, HDR.M__DT_TS AS Creation_Timestamp FROM TRN_HDR_DBF HDR WHERE M_TRN_DATE BETWEEN '01-JAN-26' AND '31-JAN-26' ORDER BY HDR.M__DT_TS DESC FETCH FIRST 100 ROWS ONLY",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE between 2026-01-01 and 2026-01-31; show M_NB, M_OPT_MOPCNT + 1, M_BTRADER if it is a Buy trade or M_STRADER if it is a sell trade, M__DT_TS; order by M__DT_TS desc; limit 100."
+  },
+  {
+    "question_id": 22,
+    "db_id": "findb_file",
+    "question": "List the last 200 trades created in January 2026 with who created them and when",
+    "SQL": "SELECT HDR.M_NB AS Trade_Number, HDR.M_OPT_MOPCNT + 1 AS Trade_Version, CASE WHEN M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS Trader, HDR.M__DT_TS AS Creation_Timestamp FROM TRN_HDR_DBF HDR WHERE M_TRN_DATE BETWEEN '01-JAN-26' AND '31-JAN-26' ORDER BY HDR.M__DT_TS DESC FETCH FIRST 200 ROWS ONLY",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE between 2026-01-01 and 2026-01-31; show M_NB, M_OPT_MOPCNT + 1, M_BTRADER if it is a Buy trade or M_STRADER if it is a sell trade, M__DT_TS; order by M__DT_TS desc; limit 200."
+  },
+  {
+    "question_id": 23,
+    "db_id": "findb_file",
+    "question": "List the last 500 trades created in January 2026 with who created them and when",
+    "SQL": "SELECT HDR.M_NB AS Trade_Number, HDR.M_OPT_MOPCNT + 1 AS Trade_Version, CASE WHEN M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS Trader, HDR.M__DT_TS AS Creation_Timestamp FROM TRN_HDR_DBF HDR WHERE M_TRN_DATE BETWEEN '01-JAN-26' AND '31-JAN-26' ORDER BY HDR.M__DT_TS DESC FETCH FIRST 500 ROWS ONLY",
+    "knowledge": "Use TRN_HDR_DBF. Filter by M_TRN_DATE between 2026-01-01 and 2026-01-31; show M_NB, M_OPT_MOPCNT + 1, M_BTRADER if it is a Buy trade or M_STRADER if it is a sell trade, M__DT_TS; order by M__DT_TS desc; limit 500."
+  },
+  {
+    "question_id": 24,
+    "db_id": "findb_file",
+    "question": "For trade 654321, show the full amendment history (all versions) with the user and timestamp of each change",
+    "SQL": "SELECT EXT.M_VERSION, US.M_LABEL, EXT.M__DT_EXTS, EXT.M__DT_TS FROM TRN_EXT_DBF EXT LEFT JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE EXT.M_TRADE_REF = 654321 ORDER BY EXT.M_VERSION ASC",
+    "knowledge": "Use TRN_EXT_DBF and MX_USER_DBF. Filter M_TRADE_REF=654321; return TRN_EXT_DBF.M_VERSION, MX_USER_DBF.M_LABEL, TRN_EXT_DBF.M__DT_EXTS, TRN_EXT_DBF.M__DT_TS; order by TRN_EXT_DBF.M_VERSION asc."
+  },
+  {
+    "question_id": 25,
+    "db_id": "findb_file",
+    "question": "Find trades modified in the last 2 days, excluding those created in the same period",
+    "SQL": "SELECT M_NB, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, M_OPT_MOPLST FROM TRN_HDR_DBF WHERE M_OPT_MOPLST >= (CURRENT_DATE - INTERVAL '2' DAY) AND M__DT_TS < (CURRENT_DATE - INTERVAL '2' DAY)",
+    "knowledge": "Use TRN_HDR_DBF. Filter M_OPT_MOPLST >= current_date-2 and M__DT_TS < current_date-2."
+  },
+  {
+    "question_id": 26,
+    "db_id": "findb_file",
+    "question": "Find trades modified in the last 3 days, excluding those created in the same period",
+    "SQL": "SELECT M_NB, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, M_OPT_MOPLST FROM TRN_HDR_DBF WHERE M_OPT_MOPLST >= (CURRENT_DATE - INTERVAL '3' DAY) AND M__DT_TS < (CURRENT_DATE - INTERVAL '3' DAY)",
+    "knowledge": "Use TRN_HDR_DBF. Filter M_OPT_MOPLST >= current_date-3 and M__DT_TS < current_date-3."
+  },
+  {
+    "question_id": 27,
+    "db_id": "findb_file",
+    "question": "Find trades modified in the last 5 days, excluding those created in the same period",
+    "SQL": "SELECT M_NB, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, M_OPT_MOPLST FROM TRN_HDR_DBF WHERE M_OPT_MOPLST >= (CURRENT_DATE - INTERVAL '5' DAY) AND M__DT_TS < (CURRENT_DATE - INTERVAL '5' DAY)",
+    "knowledge": "Use TRN_HDR_DBF. Filter M_OPT_MOPLST >= current_date-5 and M__DT_TS < current_date-5."
+  },
+  {
+    "question_id": 28,
+    "db_id": "findb_file",
+    "question": "Count how many trades each user created this month (February 2026)",
+    "SQL": "SELECT CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, COUNT(M_NB) AS NO_OF_TRADES FROM TRN_HDR_DBF WHERE M__DT_TS >= DATE '2026-02-01' AND M__DT_TS < DATE '2026-03-01' GROUP BY CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END",
+    "knowledge": "Use TRN_HDR_DBF. Group by CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END; filter M__DT_TS in Feb 2026; count M_NB."
+  },
+  {
+    "question_id": 29,
+    "db_id": "findb_file",
+    "question": "Count how many trades each user created this month (December 2024)",
+    "SQL": "SELECT CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, COUNT(M_NB) AS NO_OF_TRADES FROM TRN_HDR_DBF WHERE M__DT_TS >= DATE '2024-12-01' AND M__DT_TS < DATE '2025-01-01' GROUP BY CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END",
+    "knowledge": "Use TRN_HDR_DBF. Group by CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END; filter M__DT_TS in Dec 2024; count M_NB."
+  },
+  {
+    "question_id": 30,
+    "db_id": "findb_file",
+    "question": "List cancelled trades in Q1 2024 with cancellation user and timestamp",
+    "SQL": "SELECT HDR.M_NB, EXT.M_VERSION, HDR.M_TRN_STATUS, US.M_LABEL, US.M_DESC, EXT.M__DT_EXTS FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_NB = EXT.M_TRADE_REF JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE EXT.M_ACTION = 8 AND EXT.M__DT_EXTS >= DATE '2024-01-01' AND EXT.M__DT_EXTS < DATE '2024-04-01'",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Filter EXT.M_ACTION=8 and EXT.M__DT_EXTS in Q1 2024. Return HDR.M_NB, EXT.M_VERSION, HDR.M_TRN_STATUS, US.M_LABEL, US.M_DESC, EXT.M__DT_EXTS."
+  },
+  {
+    "question_id": 31,
+    "db_id": "findb_file",
+    "question": "List cancelled trades in Q2 2024 with cancellation user and timestamp",
+    "SQL": "SELECT HDR.M_NB, EXT.M_VERSION, HDR.M_TRN_STATUS, US.M_LABEL, US.M_DESC, EXT.M__DT_EXTS FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_NB = EXT.M_TRADE_REF JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE EXT.M_ACTION = 8 AND EXT.M__DT_EXTS >= DATE '2024-04-01' AND EXT.M__DT_EXTS < DATE '2024-07-01'",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Filter EXT.M_ACTION=8 and EXT.M__DT_EXTS in Q2 2024. Return HDR.M_NB, EXT.M_VERSION, HDR.M_TRN_STATUS, US.M_LABEL, US.M_DESC, EXT.M__DT_EXTS."
+  },
+  {
+    "question_id": 32,
+    "db_id": "findb_file",
+    "question": "For every trade, show only the most recent version along with the last updater and last update time",
+    "SQL": "SELECT  HDR.M_NB,  EXT.M_VERSION,    M_NB, CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER    END AS TRADER,  HDR.M__DT_TS,  US.M_LABEL,  US.M_DESC,  EXT.M__DT_EXTSFROM TRN_HDR_DBF HDR    JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF = EXT.M_REFERENCE    JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF."
+  },
+  {
+    "question_id": 33,
+    "db_id": "findb_file",
+    "question": "Which trades were last updated by the same user who created them?",
+    "SQL": "SELECT HDR.M_NB, EXT.M_VERSION, CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END AS TRADER, HDR.M__DT_TS, US.M_LABEL, EXT.M__DT_EXTS FROM TRN_HDR_DBF HDR JOIN TRN_EXT_DBF EXT ON HDR.M_LEXTREF = EXT.M_REFERENCE JOIN MX_USER_DBF US ON EXT.M_ACTOR = US.M_REFERENCE WHERE US.M_LABEL = (CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END)",
+    "knowledge": "Use TRN_HDR_DBF, TRN_EXT_DBF and MX_USER_DBF. Get latest version per trade, then compare US.M_LABEL and (CASE WHEN HDR.M_COMMENT_BS = 'B' THEN HDR.M_BTRADER ELSE HDR.M_STRADER END)."
+  },
+  {
+    "question_id": 34,
+    "db_id": "findb_file",
+    "question": "Show trades that have exactly 3 versions (2 amendments)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT AS amendment_count FROM TRN_HDR_DBF WHERE M_OPT_MOPCNT = 2",
+    "knowledge": "Use TRN_HDR_DBF. Use M_OPT_MOPCNT; filter M_OPT_MOPCNT = 2."
+  },
+  {
+    "question_id": 35,
+    "db_id": "findb_file",
+    "question": "Show trades that have exactly 2 versions (1 amendment)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT AS amendment_count FROM TRN_HDR_DBF WHERE M_OPT_MOPCNT = 1",
+    "knowledge": "Use TRN_HDR_DBF. Use M_OPT_MOPCNT; filter M_OPT_MOPCNT = 1."
+  },
+  {
+    "question_id": 36,
+    "db_id": "findb_file",
+    "question": "Show trades that have no amendments (only the original version)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT AS amendment_count FROM TRN_HDR_DBF WHERE M_OPT_MOPCNT = 0",
+    "knowledge": "Use TRN_HDR_DBF. Use M_OPT_MOPCNT; filter M_OPT_MOPCNT = 0."
+  },
+  {
+    "question_id": 37,
+    "db_id": "findb_file",
+    "question": "Find trades created outside business hours (before 06:00 or after 20:00)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT + 1, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, M__DT_TS, EXTRACT(HOUR FROM M__DT_TS) AS HOUR_OF_DAY FROM TRN_HDR_DBF WHERE EXTRACT(HOUR FROM M__DT_TS) < 6 OR EXTRACT(HOUR FROM M__DT_TS) >= 20",
+    "knowledge": "Use TRN_HDR_DBF. Extract hour from M__DT_TS; filter hour<6 or hour>=20."
+  },
+  {
+    "question_id": 38,
+    "db_id": "findb_file",
+    "question": "Find trades created outside business hours (before 09:00 or after 17:00)",
+    "SQL": "SELECT M_NB, M_OPT_MOPCNT + 1, CASE WHEN M_COMMENT_BS = 'B' THEN M_BTRADER ELSE M_STRADER END AS TRADER, M__DT_TS, EXTRACT(HOUR FROM M__DT_TS) AS HOUR_OF_DAY FROM TRN_HDR_DBF WHERE EXTRACT(HOUR FROM M__DT_TS) < 9 OR EXTRACT(HOUR FROM M__DT_TS) >= 17",
+    "knowledge": "Use TRN_HDR_DBF. Extract hour from M__DT_TS; filter hour<9 or hour>=17."
+  }
+]
