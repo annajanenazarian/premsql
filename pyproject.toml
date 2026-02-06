@@ -31,6 +31,8 @@ pillow = ">=8,<11"
 uvicorn = "^0.32.0"
 streamlit = "^1.40.0"
 kagglehub = "^0.3.3"
+accelerate = ">=0.26.0"
+gradio = "3.50.2"
 
 [tool.poetry.extras]
 mac = ["mlx", "mlx-lm"]
